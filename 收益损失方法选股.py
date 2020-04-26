@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-# from matplotlib import pyplot as plt
 os.chdir('/Users/D_Dj/Python_projects/stock/Stock Reload')
 
 sh_A = pd.read_excel('sh_A.xlsx', index_col=0)
@@ -23,16 +22,14 @@ lg = bs.login()
 
 def b_to_a(x):
     x_list = list(x)
-    poped = []
-    poped.append(x_list.pop(0))
-    poped.append(x_list.pop(0))
-    poped.insert(0, x_list.pop(0))
+    char_pop = [x_list.pop(0), x_list.pop(0)]
+    char_pop.insert(0, x_list.pop(0))
     x_str = ''.join(x_list)
-    if poped == ['.', 's', 'h']:  # apple Numbers 的stock函数中沪市的股票代码为600xxxx.ss
-        poped = ['.', 's', 's']
+    if char_pop == ['.', 's', 'h']:  # apple Numbers 的stock函数中沪市的股票代码为600xxxx.ss
+        char_pop = ['.', 's', 's']
     else:
         pass
-    poped_str = ''.join(poped)
+    poped_str = ''.join(char_pop)
     result = x_str + poped_str
     return result
 
@@ -51,10 +48,7 @@ def get_history_k(stock_id, s_date, e_date):
                                       "date,code,open,high,low,close,preclose,volume,amount,adjustflag,turn,tradestatus,pctChg,isST",
                                       start_date=s_date, end_date=e_date,
                                       frequency="d", adjustflag="2")
-    # print('query_history_k_data_plus respond error_code:'+rs.error_code)
-    # print('query_history_k_data_plus respond  error_msg:'+rs.error_msg)
-    # print(stock_id)
-    #### 打印结果集 ####
+
     data_list = []
     while (rs.error_code == '0') & rs.next():
         # 获取一条记录，将记录合并在一起
