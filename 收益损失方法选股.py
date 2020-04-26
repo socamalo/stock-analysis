@@ -4,6 +4,7 @@ import baostock as bs
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
+from multiprocessing import Pool
 
 os.chdir('/Users/D_Dj/Python_projects/stock/Stock Reload')
 
@@ -53,8 +54,8 @@ def get_history_k(stock_id, s_date, e_date):
     while (rs.error_code == '0') & rs.next():
         # 获取一条记录，将记录合并在一起
         data_list.append(rs.get_row_data())
-    result = pd.DataFrame(data_list, columns=rs.fields)
-    return result
+    result_k = pd.DataFrame(data_list, columns=rs.fields)
+    return result_k
 
 
 def get_pe_pb(stock_id, s_date, e_date):
@@ -68,8 +69,8 @@ def get_pe_pb(stock_id, s_date, e_date):
     while (rs.error_code == '0') & rs.next():
         # 获取一条记录，将记录合并在一起
         result_list.append(rs.get_row_data())
-    result = pd.DataFrame(result_list, columns=rs.fields)
-    return result
+    result_pe_pb = pd.DataFrame(result_list, columns=rs.fields)
+    return result_pe_pb
 
 
 # ----------------------------------------------------------------------------------
@@ -135,21 +136,27 @@ def find_low_high(result, result_pe_pb, window):
 # 找近期高低点函数
 
 index_error_list = []
-gain_lose_rate = []
 sh_sz_cyb = sh_A.append((sz_A, cyb))
-for i in sh_sz_cyb[0]:
+
+
+# for i in sh_sz_cyb[0]:
+def main_action(stock_id):
+    gain_lose_rate = []
     try:
-        result = get_history_k(i, s_date, e_date)
-        result_pe_pb = get_pe_pb(i, s_date, e_date)
+        result = get_history_k(stock_id, s_date, e_date)
+        result_pe_pb = get_pe_pb(stock_id, s_date, e_date)
         single_stock_result = find_low_high(result, result_pe_pb, window)
         gain_lose_rate.append(single_stock_result)
-        print(i)
+        print(stock_id)
     except (IndexError, ValueError)as e:
         print(e)
-        index_error_list.append([e, i])
+    return gain_lose_rate
+
+
+pool = Pool(2)
+gain_lose_rate = pool.map(main_action, cyb[0])
 
 time_stamp = (time.strftime("%m-%d-%H-%M", time.localtime()))
-
 columns = ['id', 'ratio', 'close', 'high', 'low', 'up_rate', 'down_rate', 'MA200', 'peTTM', 'pbMRQ', 'coefficient']
 
 df = pd.DataFrame(gain_lose_rate, columns=columns)
