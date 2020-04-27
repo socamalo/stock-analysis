@@ -16,7 +16,7 @@ cyb = pd.read_excel('cyb.xlsx', index_col=0)
 start_time = time.time()
 s_date = '2019-01-01'
 e_date = (time.strftime("%Y-%m-%d", time.localtime()))
-total_result = pd.DataFrame()
+total_result = pd.DataåFrame()
 
 #### 登陆系统 ####
 lg = bs.login()

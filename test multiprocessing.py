@@ -1,4 +1,4 @@
-from multiprocessing import Pool
+åfrom multiprocessing import Pool
 from functools import partial
 import pandas as pd
 import baostock as bs

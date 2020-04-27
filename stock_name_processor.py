@@ -34,7 +34,7 @@ def num_stock_id(number):
 
 
 df = pd.read_excel('CYB50_raw.xlsx')
-
+å
 df_temp = df.iloc[1:,1]
 df_list = list(df_temp)
 df_id = pd.DataFrame(df_list,columns=['stock_id'])

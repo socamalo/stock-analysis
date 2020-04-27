@@ -7,6 +7,7 @@ from sklearn.linear_model import LinearRegression
 
 # from matplotlib import pyplot as plt
 #os.chdir('/Users/D_Dj/Python_projects/stock/Stock Reload')
+os.chdir('/Users/D_Dj/PycharmProjects/Stock_analysis/Stock_analysis/stock_id')
 
 '''sh_A = pd.read_excel('sh_A.xlsx', index_col=0)
 sz_A = pd.read_excel('sz_A.xlsx', index_col=0)
@@ -14,7 +15,7 @@ cyb = pd.read_excel('cyb.xlsx', index_col=0)'''
 A500 = pd.read_excel('A500.xlsx', index_col=0)
 SH50 = pd.read_excel('SH50.xlsx',index_col=0)
 CYB50 = pd.read_excel('CYB50.xlsx',index_col=0)
-# 获取最近股票的阶段最高价和最低价
+# 获取最近股票的阶段最高价和最低价å
 start_time = time.time()
 window = 30
 s_date = '2019-01-01'
@@ -171,6 +172,9 @@ df_MA_True = df[(df.MA200 == True) & \
                 (df.pbMRQ < df.pbMRQ.mean() * 1.55)]
 df_MA_True = df_MA_True.sort_values(by=['ratio'], ascending=False, axis=0)
 df_MA_True = df_MA_True.reset_index(drop=True)
+df_MA_True.drop_duplicates(keep='first', inplace=True) #删除重复的行
+
+os.chdir('/Users/D_Dj/PycharmProjects/Stock_analysis/Stock_analysis/Daily_result')
 df_MA_True.to_excel(f'收益率-{window}窗口-{time_stamp}.xlsx')
 
 # 把股票代码变成 000001，0000002类型------
