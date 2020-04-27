@@ -6,15 +6,15 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 
 # from matplotlib import pyplot as plt
-os.chdir('/Users/D_Dj/Python_projects/stock/Stock Reload')
+#os.chdir('/Users/D_Dj/Python_projects/stock/Stock Reload')
 
-sh_A = pd.read_excel('sh_A.xlsx', index_col=0)
+'''sh_A = pd.read_excel('sh_A.xlsx', index_col=0)
 sz_A = pd.read_excel('sz_A.xlsx', index_col=0)
-cyb = pd.read_excel('cyb.xlsx', index_col=0)
-
+cyb = pd.read_excel('cyb.xlsx', index_col=0)'''
+A500 = pd.read_excel('A500.xlsx', index_col=0)
 # 获取最近股票的阶段最高价和最低价
 start_time = time.time()
-window = 50
+window = 30
 s_date = '2019-01-01'
 e_date = (time.strftime("%Y-%m-%d", time.localtime()))
 total_result = pd.DataFrame()
@@ -142,10 +142,10 @@ def find_low_high(result, result_pe_pb, window):
 
 # 找近期高低点函数
 
-index_error_list = []
+error_list = []
 gain_lose_rate = []
-sh_sz_cyb = sh_A.append((sz_A, cyb))
-for i in sh_sz_cyb[0]:
+#sh_sz_cyb = sh_A.append((sz_A, cyb))
+for i in A500.stock_id:
     try:
         result = get_history_k(i, s_date, e_date)
         result_pe_pb = get_pe_pb(i, s_date, e_date)
@@ -154,7 +154,7 @@ for i in sh_sz_cyb[0]:
         print(i)
     except (IndexError, ValueError)as e:
         print(e)
-        index_error_list.append([e, i])
+        error_list.append([e, i])
 
 time_stamp = (time.strftime("%m-%d-%H-%M", time.localtime()))
 
@@ -177,4 +177,5 @@ stock_id_temp = []
 for i in stock_id_list:
     stock_id_temp.append(pop_3(i))
 stock_id_str = ''.join(stock_id_temp)
+print(stock_id_str)
 print('完成任务，用时：%f' % (time.time() - start_time))
