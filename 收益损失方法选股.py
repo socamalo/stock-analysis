@@ -167,7 +167,7 @@ df = pd.DataFrame(gain_lose_rate, columns=columns)
 df_MA_True = df[(df.MA200 == True) & \
                 (df.down_rate < 0.1) \
                 & (df.ratio >= 3) & \
-                (df.peTTM < df.peTTM.mean() * 1.3) & \
+           #     (df.peTTM < df.peTTM.mean() * 1.3) & \
                 (df.peTTM > 0) & \
                 (df.pbMRQ < df.pbMRQ.mean() * 1.55)]
 df_MA_True = df_MA_True.sort_values(by=['ratio'], ascending=False, axis=0)
