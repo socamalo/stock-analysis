@@ -33,7 +33,7 @@ def num_stock_id(number):
 
 
 
-df = pd.read_excel('china500.xlsx')
+df = pd.read_excel('CYB50_raw.xlsx')
 
 df_temp = df.iloc[1:,1]
 df_list = list(df_temp)

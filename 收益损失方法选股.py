@@ -12,6 +12,8 @@ from sklearn.linear_model import LinearRegression
 sz_A = pd.read_excel('sz_A.xlsx', index_col=0)
 cyb = pd.read_excel('cyb.xlsx', index_col=0)'''
 A500 = pd.read_excel('A500.xlsx', index_col=0)
+SH50 = pd.read_excel('SH50.xlsx',index_col=0)
+CYB50 = pd.read_excel('CYB50.xlsx',index_col=0)
 # 获取最近股票的阶段最高价和最低价
 start_time = time.time()
 window = 30
@@ -82,7 +84,6 @@ def get_pe_pb(stock_id, s_date, e_date):
 
 # ----------------------------------------------------------------------------------
 # 处理数据
-# result['SMA'] = result.close.rolling(window).mean()
 def find_low_high(result, result_pe_pb, window):
     result['close'] = pd.to_numeric(result['close'])
     result['low'] = pd.to_numeric(result['low'])
@@ -144,8 +145,9 @@ def find_low_high(result, result_pe_pb, window):
 
 error_list = []
 gain_lose_rate = []
+stock_to_check = A500.append((SH50, CYB50))
 #sh_sz_cyb = sh_A.append((sz_A, cyb))
-for i in A500.stock_id:
+for i in stock_to_check.stock_id:
     try:
         result = get_history_k(i, s_date, e_date)
         result_pe_pb = get_pe_pb(i, s_date, e_date)
