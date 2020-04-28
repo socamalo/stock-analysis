@@ -19,7 +19,7 @@ stock_id = 'sh.600703'  # 利民股份
 # stock_id = 'sz.000063'中兴
 # stock_id = 'sz.000876'#新希望
 
-window = 20
+window = 30
 s_date = '2010-11-01'
 
 #### 登陆系统 ####
@@ -107,8 +107,8 @@ up_rate_p['p'] = up_rate_p.mark.apply(lambda x: x / up_rate_p.mark.sum())
 down_rate_p['p'] = down_rate_p.mark.apply(lambda x: x / down_rate_p.mark.sum())
 
 
-tc_count = tc_df.groupby(['mark', 'rate'])[['len', 'rate']].count()
-tc_mean = tc_df.groupby(['mark', 'rate'])[['len', 'rate']].mean().round()
+tc_count = tc_df.groupby(['mark', 'rate'])[['rate']].count()
+tc_mean = tc_df.groupby(['mark', 'rate'])[['rate']].mean().round()
 print(tc_count, tc_mean)
 # plt.plot(up_len_p.p)
 
