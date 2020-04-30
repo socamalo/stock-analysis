@@ -11,7 +11,6 @@ lg = bs.login()
 
 
 class Company:
-    stock_id: 'stock id'
     start_date = '2019-01-01'
 
     @staticmethod
@@ -56,7 +55,6 @@ class Company:
         LR = LinearRegression()
         LR.fit(x_std, y_std)
         self.coefficient_MA200 = LR.coef_[0][0]# model.coef结果为二位数列
-
 
     def get_pe_pb(self):
         now = datetime.datetime.now()
