@@ -10,7 +10,7 @@ lg = bs.login()
 
 
 class Company:
-    start_date = '2019-01-01'
+    start_date = '2010-01-01'
 
     @staticmethod
     def lin_regplot(x, y, model):
@@ -25,7 +25,6 @@ class Company:
 
     @property
     def history_k(self):
-        self.ran_get_history_k_mark = True
         rs = bs.query_history_k_data_plus(self.stock_id,
                                           "date,code,open,high,low,close,preclose,volume,"
                                           "amount,adjustflag,turn,tradestatus,pctChg,isST",
@@ -40,6 +39,8 @@ class Company:
         result[cols] = result[cols].apply(pd.to_numeric, errors='coerce', axis=1)
         result['MA200'] = result.high.rolling(200).mean()  # 计算好200日移动平均
         result.dropna(inplace=True)
+        if data_list:
+            self.ran_get_history_k_mark = True #如果获取到了数据，改写标记
         # self.last_close_price = result['close'][len(result) - 1]  # 初始化最后一个交易日收盘价
         # self.aboveMA200_mark = self.last_close_price > result['MA200'][len(result) - 1]  # 初始化最后交易日收盘价是否在MA300之上
         return result
@@ -93,6 +94,38 @@ class Company:
         return (peTTM, pbMRQ)
 
     @property
+    def gain_lose_ratio(self):
+        if not self.ran_get_history_k_mark:
+            self.history_k
+
+       #----------
+        window = 30
+        history_k = self.history_k
+        history_k['min'] = self.history_k.low.rolling(window).min()
+        history_k['max'] = self.history_k.high.rolling(window).max()
+        history_k = history_k.dropna()
+        history_k = history_k.reset_index(drop=True)
+
+        low_list = []
+        high_list = []
+        for i in range(len(history_k) - 1, 0, -1):
+            if (history_k.high[i] == history_k['max'][i]) & (history_k.close[i] != history_k.close[i - 1]):
+                high_list.append(history_k.high[i])
+            elif (history_k.low[i] == history_k['min'][i]) & (history_k.close[i] != history_k.close[i - 1]):
+                low_list.append(history_k.low[i])
+
+        pre_close = history_k.close[len(history_k) - 1]
+        up_rate = (high_list[0] - pre_close) / pre_close
+        down_rate = (pre_close - low_list[0]) / pre_close
+        if down_rate == 0:
+            ratio = 1000
+        else:
+            ratio = up_rate / down_rate
+
+        return {'gain_lose_ratio': ratio, 'gain_ratio': up_rate, 'lose_ratio': down_rate,
+                'pre_high': high_list[0], 'pre_low': low_list[0]}
+
+    @property
     def code_name(self):
         rs = bs.query_stock_basic(code=self.stock_id)
         data_list = []
@@ -137,10 +170,11 @@ class Company:
         plt.plot(self.x_std, self.y_quad_fit)
 
     def cubic_fit(self, length=50, draw_length=50):
-        if self.last_close_price == 'NaN':
-            self.get_history_k()
-        y = pd.DataFrame(self.history_k.close[(len(self.history_k) - length):(len(self.history_k))])
-        print(self.history_k.date[len(self.history_k) - length])
+        if not self.ran_get_history_k_mark:
+            self.history_k
+      #  y = pd.DataFrame(self.history_k.close[(len(self.history_k) - length):(len(self.history_k))])
+        y = pd.DataFrame(self.history_k.close.tail(length))
+        print(self.history_k.date.iloc[len(self.history_k) - length])
         x = pd.DataFrame(np.arange(len(y)))
         sc_x = StandardScaler()
         sc_y = StandardScaler()
@@ -164,3 +198,4 @@ class Company:
         y_std_plot = y_std[len(y_std) - draw_length:len(y_std) - 1]
         plt.scatter(x_std_plot, y_std_plot)
         plt.plot(x_future_std, y_cubic_fit)
+
