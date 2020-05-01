@@ -122,10 +122,10 @@ class Company:
         plt.scatter(self.x_std, self.y_std)
         plt.plot(self.x_std, self.y_quad_fit)
 
-    def cubic_fit(self,length=60):
+    def cubic_fit(self, length=50, draw_length=50):
         if self.last_close_price == 'NaN':
             self.get_history_k()
-        y = pd.DataFrame(self.history_k.MA200[(len(self.history_k) - length):(len(self.history_k))])
+        y = pd.DataFrame(self.history_k.close[(len(self.history_k) - length):(len(self.history_k))])
         print(self.history_k.date[len(self.history_k)-length])
         x = pd.DataFrame(np.arange(len(y)))
         sc_x = StandardScaler()
@@ -136,13 +136,17 @@ class Company:
         self.regr = LinearRegression()
         cubic = PolynomialFeatures(degree=3)
         self.x_cubic = cubic.fit_transform(self.x_std)
-        x_future = pd.DataFrame(np.arange(len(y)+5))#预测5天
-        x_future_std = sc_x_future.fit_transform(x_future)
-       # self.x_fit = np.linspace(-1.7262869,1.7262869,300)[:, np.newaxis]
+        #-------预测未来5天------------
+        self.x_future_std = self.x_std[len(self.x_std)-draw_length:len(self.x_std)-1] #只画出最近30天，用length天训练
+        forecast_length = int(draw_length * 0.1)
+        for i in range(forecast_length):
+            self.x_future_std = np.append(self.x_future_std,\
+                                          (self.x_future_std[len(self.x_future_std)-1][0]+(self.x_future_std[len(self.x_future_std)-1][0]-self.x_future_std[len(self.x_future_std)-2][0]) )).reshape(-1,1)
         self.regr.fit(self.x_cubic, self.y_std)
-        self.y_cubic_fit = self.regr.predict(cubic.fit_transform(x_future_std))
-      #  self.lin_regplot(self.x_std, self.y_std, self.pr)
-        plt.scatter(self.x_std, self.y_std)
-        plt.plot(x_future_std, self.y_cubic_fit)
+        self.y_cubic_fit = self.regr.predict(cubic.fit_transform(self.x_future_std))
+        x_std_plot = self.x_std[len(self.x_std)-draw_length:len(self.x_std)-1]
+        y_std_plot = self.y_std[len(self.y_std)-draw_length:len(self.y_std)-1]
+        plt.scatter(x_std_plot, y_std_plot)
+        plt.plot(self.x_future_std, self.y_cubic_fit)
 
 
