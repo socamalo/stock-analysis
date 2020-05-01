@@ -131,22 +131,22 @@ class Company:
         sc_x = StandardScaler()
         sc_y = StandardScaler()
         sc_x_future = StandardScaler()
-        self.x_std = sc_x.fit_transform(x)
-        self.y_std = sc_y.fit_transform(y)
+        x_std = sc_x.fit_transform(x)
+        y_std = sc_y.fit_transform(y)
         self.regr = LinearRegression()
         cubic = PolynomialFeatures(degree=3)
-        self.x_cubic = cubic.fit_transform(self.x_std)
+        x_cubic = cubic.fit_transform(x_std)
         #-------预测未来5天------------
-        self.x_future_std = self.x_std[len(self.x_std)-draw_length:len(self.x_std)-1] #只画出最近30天，用length天训练
+        x_future_std = x_std[len(x_std)-draw_length:len(x_std)-1] #只画出最近30天，用length天训练
         forecast_length = int(draw_length * 0.1)
         for i in range(forecast_length):
-            self.x_future_std = np.append(self.x_future_std,\
-                                          (self.x_future_std[len(self.x_future_std)-1][0]+(self.x_future_std[len(self.x_future_std)-1][0]-self.x_future_std[len(self.x_future_std)-2][0]) )).reshape(-1,1)
-        self.regr.fit(self.x_cubic, self.y_std)
-        self.y_cubic_fit = self.regr.predict(cubic.fit_transform(self.x_future_std))
-        x_std_plot = self.x_std[len(self.x_std)-draw_length:len(self.x_std)-1]
-        y_std_plot = self.y_std[len(self.y_std)-draw_length:len(self.y_std)-1]
+            x_future_std = np.append(x_future_std,\
+                                          (x_future_std[len(x_future_std)-1][0]+(x_future_std[len(x_future_std)-1][0]-x_future_std[len(x_future_std)-2][0]) )).reshape(-1,1)
+        self.regr.fit(x_cubic, y_std)
+        y_cubic_fit = self.regr.predict(cubic.fit_transform(x_future_std))
+        x_std_plot = x_std[len(x_std)-draw_length:len(x_std)-1]
+        y_std_plot = y_std[len(y_std)-draw_length:len(y_std)-1]
         plt.scatter(x_std_plot, y_std_plot)
-        plt.plot(self.x_future_std, self.y_cubic_fit)
+        plt.plot(x_future_std, y_cubic_fit)
 
 
