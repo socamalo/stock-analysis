@@ -6,12 +6,11 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 
-
 lg = bs.login()
 
 
 class Company:
-    start_date = '2010-01-01'
+    start_date = '2019-01-01'
 
     @staticmethod
     def lin_regplot(x, y, model):
@@ -22,14 +21,11 @@ class Company:
     def __init__(self, stock_id):
         self.stock_id = stock_id
         self.end_date = (time.strftime("%Y-%m-%d", time.localtime()))
-        self.peTTM = 'NaN'
-        self.pbMRQ = 'NaN'
-        self.last_close_price = 'NaN'
-        self.aboveMA200_mark = 'NaN'
-        self.history_k = 'NaN'
-        self.coefficient_MA200 = 'NaN'
+        self.ran_get_history_k_mark = False
 
-    def get_history_k(self):
+    @property
+    def history_k(self):
+        self.ran_get_history_k_mark = True
         rs = bs.query_history_k_data_plus(self.stock_id,
                                           "date,code,open,high,low,close,preclose,volume,"
                                           "amount,adjustflag,turn,tradestatus,pctChg,isST",
@@ -43,11 +39,27 @@ class Company:
         cols = ['open', 'close', 'low', 'high', 'preclose', 'volume', 'amount', 'turn', 'pctChg']  # 多列转化成数字
         result[cols] = result[cols].apply(pd.to_numeric, errors='coerce', axis=1)
         result['MA200'] = result.high.rolling(200).mean()  # 计算好200日移动平均
-        #result.dropna(inplace=True)
-        self.last_close_price = result['close'][len(result) - 1]  # 初始化最后一个交易日收盘价
-        self.aboveMA200_mark = self.last_close_price > result['MA200'][len(result) - 1]  # 初始化最后交易日收盘价是否在MA300之上
-        self.history_k = result
-        #----------------Linear Regression----------------
+        result.dropna(inplace=True)
+        # self.last_close_price = result['close'][len(result) - 1]  # 初始化最后一个交易日收盘价
+        # self.aboveMA200_mark = self.last_close_price > result['MA200'][len(result) - 1]  # 初始化最后交易日收盘价是否在MA300之上
+        return result
+
+    @property
+    def aboveMA200_mark(self):
+        if not self.ran_get_history_k_mark:
+            self.history_k
+        return self.last_close_price > self.history_k['MA200'].tail(1).iloc[0]
+
+    @property
+    def last_close_price(self):
+        if not self.ran_get_history_k_mark:
+            self.history_k
+        return self.history_k['close'].tail(1).iloc[0]
+
+    @property
+    def coefficient_MA200(self):
+        if not self.ran_get_history_k_mark:
+            self.history_k
         y = pd.DataFrame(self.history_k.MA200[(len(self.history_k) - 30):(len(self.history_k))])
         x = pd.DataFrame(np.arange(len(y)))
         sc_x = StandardScaler()
@@ -56,9 +68,10 @@ class Company:
         y_std = sc_y.fit_transform(y)
         lr = LinearRegression()
         lr.fit(x_std, y_std)
-        self.coefficient_MA200 = lr.coef_[0][0]# model.coef结果为二位数列
+        return lr.coef_[0][0]
 
-    def get_pe_pb(self):
+    @property
+    def pe_pb(self):
         now = datetime.datetime.now()
         delta = datetime.timedelta(days=-90)
         pe_start_time = (now + delta).strftime('%Y-%m-%d')
@@ -75,8 +88,9 @@ class Company:
         result = pd.DataFrame(result_list, columns=rs.fields)
         cols = ['peTTM', 'pbMRQ']  # 多列转化成数字
         result[cols] = result[cols].apply(pd.to_numeric, errors='coerce', axis=1)
-        self.peTTM = result['peTTM'][len(result) - 1]
-        self.pbMRQ = result['pbMRQ'][len(result) - 1]  # MRQ: most recent quarter
+        peTTM = result['peTTM'][len(result) - 1]
+        pbMRQ = result['pbMRQ'][len(result) - 1]  # MRQ: most recent quarter
+        return (peTTM, pbMRQ)
 
     @property
     def code_name(self):
@@ -91,7 +105,7 @@ class Company:
         if self.last_close_price == 'NaN':
             self.get_history_k()
         y = pd.DataFrame(self.history_k.MA200[(len(self.history_k) - length):(len(self.history_k))])
-        print(self.history_k.date[len(self.history_k)-length])
+        print(self.history_k.date[len(self.history_k) - length])
         x = pd.DataFrame(np.arange(len(y)))
         sc_x = StandardScaler()
         sc_y = StandardScaler()
@@ -102,11 +116,11 @@ class Company:
         print('LR:', lr.coef_)
         self.lin_regplot(self.x_std, self.y_std, lr)
 
-    def quatratic_fit(self,length=60):
+    def quatratic_fit(self, length=60):
         if self.last_close_price == 'NaN':
             self.get_history_k()
         y = pd.DataFrame(self.history_k.MA200[(len(self.history_k) - length):(len(self.history_k))])
-        print(self.history_k.date[len(self.history_k)-length])
+        print(self.history_k.date[len(self.history_k) - length])
         x = pd.DataFrame(np.arange(len(y)))
         sc_x = StandardScaler()
         sc_y = StandardScaler()
@@ -115,10 +129,10 @@ class Company:
         self.pr = LinearRegression()
         quadratic = PolynomialFeatures(degree=2)
         self.x_quad = quadratic.fit_transform(self.x_std)
-       # self.x_fit = np.linspace(-1.7262869,1.7262869,300)[:, np.newaxis]
+        # self.x_fit = np.linspace(-1.7262869,1.7262869,300)[:, np.newaxis]
         self.pr.fit(self.x_quad, self.y_std)
         self.y_quad_fit = self.pr.predict(quadratic.fit_transform(self.x_std))
-      #  self.lin_regplot(self.x_std, self.y_std, self.pr)
+        #  self.lin_regplot(self.x_std, self.y_std, self.pr)
         plt.scatter(self.x_std, self.y_std)
         plt.plot(self.x_std, self.y_quad_fit)
 
@@ -126,7 +140,7 @@ class Company:
         if self.last_close_price == 'NaN':
             self.get_history_k()
         y = pd.DataFrame(self.history_k.close[(len(self.history_k) - length):(len(self.history_k))])
-        print(self.history_k.date[len(self.history_k)-length])
+        print(self.history_k.date[len(self.history_k) - length])
         x = pd.DataFrame(np.arange(len(y)))
         sc_x = StandardScaler()
         sc_y = StandardScaler()
@@ -136,17 +150,17 @@ class Company:
         self.regr = LinearRegression()
         cubic = PolynomialFeatures(degree=3)
         x_cubic = cubic.fit_transform(x_std)
-        #-------预测未来5天------------
-        x_future_std = x_std[len(x_std)-draw_length:len(x_std)-1] #只画出最近30天，用length天训练
+        # -------预测未来5天------------
+        x_future_std = x_std[len(x_std) - draw_length:len(x_std) - 1]  # 只画出最近30天，用length天训练
         forecast_length = int(draw_length * 0.1)
         for i in range(forecast_length):
-            x_future_std = np.append(x_future_std,\
-                                          (x_future_std[len(x_future_std)-1][0]+(x_future_std[len(x_future_std)-1][0]-x_future_std[len(x_future_std)-2][0]) )).reshape(-1,1)
+            x_future_std = np.append(x_future_std, \
+                                     (x_future_std[len(x_future_std) - 1][0] + (x_future_std[len(x_future_std) - 1][0] -
+                                                                                x_future_std[len(x_future_std) - 2][
+                                                                                    0]))).reshape(-1, 1)
         self.regr.fit(x_cubic, y_std)
         y_cubic_fit = self.regr.predict(cubic.fit_transform(x_future_std))
-        x_std_plot = x_std[len(x_std)-draw_length:len(x_std)-1]
-        y_std_plot = y_std[len(y_std)-draw_length:len(y_std)-1]
+        x_std_plot = x_std[len(x_std) - draw_length:len(x_std) - 1]
+        y_std_plot = y_std[len(y_std) - draw_length:len(y_std) - 1]
         plt.scatter(x_std_plot, y_std_plot)
         plt.plot(x_future_std, y_cubic_fit)
-
-
