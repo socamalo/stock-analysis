@@ -130,16 +130,19 @@ class Company:
         x = pd.DataFrame(np.arange(len(y)))
         sc_x = StandardScaler()
         sc_y = StandardScaler()
+        sc_x_future = StandardScaler()
         self.x_std = sc_x.fit_transform(x)
         self.y_std = sc_y.fit_transform(y)
         self.regr = LinearRegression()
         cubic = PolynomialFeatures(degree=3)
         self.x_cubic = cubic.fit_transform(self.x_std)
+        x_future = pd.DataFrame(np.arange(len(y)+5))#预测5天
+        x_future_std = sc_x_future.fit_transform(x_future)
        # self.x_fit = np.linspace(-1.7262869,1.7262869,300)[:, np.newaxis]
         self.regr.fit(self.x_cubic, self.y_std)
-        self.y_cubic_fit = self.regr.predict(cubic.fit_transform(self.x_std))
+        self.y_cubic_fit = self.regr.predict(cubic.fit_transform(x_future_std))
       #  self.lin_regplot(self.x_std, self.y_std, self.pr)
         plt.scatter(self.x_std, self.y_std)
-        plt.plot(self.x_std, self.y_cubic_fit)
+        plt.plot(x_future_std, self.y_cubic_fit)
 
 
