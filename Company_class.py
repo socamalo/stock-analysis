@@ -4,14 +4,14 @@ import numpy as np
 import baostock as bs
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 
 
 lg = bs.login()
 
 
 class Company:
-    start_date = '2019-01-01'
+    start_date = '2010-01-01'
 
     @staticmethod
     def lin_regplot(x, y, model):
@@ -22,16 +22,17 @@ class Company:
     def __init__(self, stock_id):
         self.stock_id = stock_id
         self.end_date = (time.strftime("%Y-%m-%d", time.localtime()))
-        self.peTTM = 'na'
-        self.pbMRQ = 'na'
-        self.last_close_price = 'na'
-        self.aboveMA200_mark = 'na'
-        self.history_k = 'na'
-        self.coefficient_MA200 = 'na'
+        self.peTTM = 'NaN'
+        self.pbMRQ = 'NaN'
+        self.last_close_price = 'NaN'
+        self.aboveMA200_mark = 'NaN'
+        self.history_k = 'NaN'
+        self.coefficient_MA200 = 'NaN'
 
     def get_history_k(self):
         rs = bs.query_history_k_data_plus(self.stock_id,
-                                          "date,code,open,high,low,close,preclose,volume,amount,adjustflag,turn,tradestatus,pctChg,isST",
+                                          "date,code,open,high,low,close,preclose,volume,"
+                                          "amount,adjustflag,turn,tradestatus,pctChg,isST",
                                           start_date=self.start_date, end_date=self.end_date,
                                           frequency="d", adjustflag="2")
         data_list = []
@@ -42,19 +43,20 @@ class Company:
         cols = ['open', 'close', 'low', 'high', 'preclose', 'volume', 'amount', 'turn', 'pctChg']  # 多列转化成数字
         result[cols] = result[cols].apply(pd.to_numeric, errors='coerce', axis=1)
         result['MA200'] = result.high.rolling(200).mean()  # 计算好200日移动平均
+        #result.dropna(inplace=True)
         self.last_close_price = result['close'][len(result) - 1]  # 初始化最后一个交易日收盘价
         self.aboveMA200_mark = self.last_close_price > result['MA200'][len(result) - 1]  # 初始化最后交易日收盘价是否在MA300之上
         self.history_k = result
         #----------------Linear Regression----------------
-        x = pd.DataFrame(np.arange(30))
         y = pd.DataFrame(self.history_k.MA200[(len(self.history_k) - 30):(len(self.history_k))])
+        x = pd.DataFrame(np.arange(len(y)))
         sc_x = StandardScaler()
         sc_y = StandardScaler()
         x_std = sc_x.fit_transform(x)
         y_std = sc_y.fit_transform(y)
-        LR = LinearRegression()
-        LR.fit(x_std, y_std)
-        self.coefficient_MA200 = LR.coef_[0][0]# model.coef结果为二位数列
+        lr = LinearRegression()
+        lr.fit(x_std, y_std)
+        self.coefficient_MA200 = lr.coef_[0][0]# model.coef结果为二位数列
 
     def get_pe_pb(self):
         now = datetime.datetime.now()
@@ -85,16 +87,59 @@ class Company:
             data_list.append(rs.get_row_data())
         return data_list[0][1]
 
-    def draw(self):
-        x = pd.DataFrame(np.arange(30))
-        y = pd.DataFrame(self.history_k.MA200[(len(self.history_k) - 30):(len(self.history_k))])
+    def linear_fit(self, length=300):
+        if self.last_close_price == 'NaN':
+            self.get_history_k()
+        y = pd.DataFrame(self.history_k.MA200[(len(self.history_k) - length):(len(self.history_k))])
+        print(self.history_k.date[len(self.history_k)-length])
+        x = pd.DataFrame(np.arange(len(y)))
         sc_x = StandardScaler()
         sc_y = StandardScaler()
-        x_std = sc_x.fit_transform(x)
-        y_std = sc_y.fit_transform(y)
-        LR = LinearRegression()
-        LR.fit(x_std, y_std)
-        print('LR:', LR.coef_)
-        self.lin_regplot(x_std, y_std, LR)
+        self.x_std = sc_x.fit_transform(x)
+        self.y_std = sc_y.fit_transform(y)
+        lr = LinearRegression()
+        lr.fit(self.x_std, self.y_std)
+        print('LR:', lr.coef_)
+        self.lin_regplot(self.x_std, self.y_std, lr)
+
+    def quatratic_fit(self,length=60):
+        if self.last_close_price == 'NaN':
+            self.get_history_k()
+        y = pd.DataFrame(self.history_k.MA200[(len(self.history_k) - length):(len(self.history_k))])
+        print(self.history_k.date[len(self.history_k)-length])
+        x = pd.DataFrame(np.arange(len(y)))
+        sc_x = StandardScaler()
+        sc_y = StandardScaler()
+        self.x_std = sc_x.fit_transform(x)
+        self.y_std = sc_y.fit_transform(y)
+        self.pr = LinearRegression()
+        quadratic = PolynomialFeatures(degree=2)
+        self.x_quad = quadratic.fit_transform(self.x_std)
+       # self.x_fit = np.linspace(-1.7262869,1.7262869,300)[:, np.newaxis]
+        self.pr.fit(self.x_quad, self.y_std)
+        self.y_quad_fit = self.pr.predict(quadratic.fit_transform(self.x_std))
+      #  self.lin_regplot(self.x_std, self.y_std, self.pr)
+        plt.scatter(self.x_std, self.y_std)
+        plt.plot(self.x_std, self.y_quad_fit)
+
+    def cubic_fit(self,length=60):
+        if self.last_close_price == 'NaN':
+            self.get_history_k()
+        y = pd.DataFrame(self.history_k.MA200[(len(self.history_k) - length):(len(self.history_k))])
+        print(self.history_k.date[len(self.history_k)-length])
+        x = pd.DataFrame(np.arange(len(y)))
+        sc_x = StandardScaler()
+        sc_y = StandardScaler()
+        self.x_std = sc_x.fit_transform(x)
+        self.y_std = sc_y.fit_transform(y)
+        self.regr = LinearRegression()
+        cubic = PolynomialFeatures(degree=3)
+        self.x_cubic = cubic.fit_transform(self.x_std)
+       # self.x_fit = np.linspace(-1.7262869,1.7262869,300)[:, np.newaxis]
+        self.regr.fit(self.x_cubic, self.y_std)
+        self.y_cubic_fit = self.regr.predict(cubic.fit_transform(self.x_std))
+      #  self.lin_regplot(self.x_std, self.y_std, self.pr)
+        plt.scatter(self.x_std, self.y_std)
+        plt.plot(self.x_std, self.y_cubic_fit)
 
 
