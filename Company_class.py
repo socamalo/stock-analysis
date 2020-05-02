@@ -91,7 +91,7 @@ class Company:
         result[cols] = result[cols].apply(pd.to_numeric, errors='coerce', axis=1)
         peTTM = result['peTTM'][len(result) - 1]
         pbMRQ = result['pbMRQ'][len(result) - 1]  # MRQ: most recent quarter
-        return (peTTM, pbMRQ)
+        return {'peTTM': peTTM, 'pbMRQ': pbMRQ}
 
     @property
     def gain_lose_ratio(self):
