@@ -10,7 +10,7 @@ lg = bs.login()
 
 
 class Company:
-    start_date = '2010-01-01'
+    start_date = '2018-01-01'
 
     @staticmethod
     def lin_regplot(x, y, model):
