@@ -1,3 +1,4 @@
+import os
 import time, datetime
 import pandas as pd
 import numpy as np
@@ -11,6 +12,39 @@ lg = bs.login()
 
 class Company:
     start_date = '2018-01-01'
+
+    @classmethod
+    def zz500(cls):
+        rs = bs.query_zz500_stocks()
+        zz500_stocks = []
+        while (rs.error_code == '0') & rs.next():
+            zz500_stocks.append(rs.get_row_data())
+        result = pd.DataFrame(zz500_stocks, columns=rs.fields)
+        return result.code
+
+    @classmethod
+    def hs300(cls):
+        rs = bs.query_hs300_stocks()
+        hs300_stocks = []
+        while (rs.error_code == '0') & rs.next():
+            hs300_stocks.append(rs.get_row_data())
+        result = pd.DataFrame(hs300_stocks, columns=rs.fields)
+        return result.code
+
+    @classmethod
+    def sz50(cls):
+        rs = bs.query_sz50_stocks()
+        sz50_stocks = []
+        while (rs.error_code == '0') & rs.next():
+            sz50_stocks.append(rs.get_row_data())
+        result = pd.DataFrame(sz50_stocks, columns=rs.fields)
+        return result.code
+
+    @classmethod
+    def cyb50(cls):
+        os.chdir('/Users/D_Dj/PycharmProjects/Stock_analysis/Stock_analysis/stock_id')
+        cyb50 = pd.read_excel('CYB50.xlsx', index_col=0)
+        return cyb50.stock_id
 
     @staticmethod
     def lin_regplot(x, y, model):
