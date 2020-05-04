@@ -72,6 +72,7 @@ class Company:
         cols = ['open', 'close', 'low', 'high', 'preclose', 'volume', 'amount', 'turn', 'pctChg']  # 多列转化成数字
         result[cols] = result[cols].apply(pd.to_numeric, errors='coerce', axis=1)
         result['MA200'] = result.high.rolling(200).mean()  # 计算好200日移动平均
+        result['MA20'] = result.high.rolling(20).mean()  # 计算好200日移动平均
         result.dropna(inplace=True)
         if data_list:
             self.ran_get_history_k_mark = True #如果获取到了数据，改写标记
@@ -147,17 +148,21 @@ class Company:
                 high_list.append(history_k.high[i])
             elif (history_k.low[i] == history_k['min'][i]) & (history_k.close[i] != history_k.close[i - 1]):
                 low_list.append(history_k.low[i])
+        try:
+            pre_close = history_k.close[len(history_k) - 1]
+            up_rate = (high_list[0] - pre_close) / pre_close
+            down_rate = (pre_close - low_list[0]) / pre_close
+            if down_rate == 0:
+                ratio = 1000
+            else:
+                ratio = up_rate / down_rate
 
-        pre_close = history_k.close[len(history_k) - 1]
-        up_rate = (high_list[0] - pre_close) / pre_close
-        down_rate = (pre_close - low_list[0]) / pre_close
-        if down_rate == 0:
-            ratio = 1000
-        else:
-            ratio = up_rate / down_rate
-
-        return {'gain_lose_ratio': ratio, 'gain_ratio': up_rate, 'lose_ratio': down_rate,
-                'pre_high': high_list[0], 'pre_low': low_list[0]}
+            return {'gain_lose_ratio': ratio, 'gain_ratio': up_rate, 'lose_ratio': down_rate,
+                    'pre_high': high_list[0], 'pre_low': low_list[0]}
+        except (IndexError, ValueError)as e:
+            print(e)
+            return {'gain_lose_ratio': 0.0, 'gain_ratio': 0.0, 'lose_ratio': 0.0,
+                    'pre_high': 0.0, 'pre_low': 0.0}
 
     @property
     def code_name(self):
@@ -167,6 +172,15 @@ class Company:
             # 获取一条记录，将记录合并在一起
             data_list.append(rs.get_row_data())
         return data_list[0][1]
+
+    @property
+    def close_MA20_std(self):
+        if not self.ran_get_history_k_mark:
+            self.history_k
+        df = self.history_k
+        df['close_MA20'] = df.apply(lambda x: x['close']-x['MA20'], axis=1)
+        return {'std': df.close_MA20.describe()['std'], 'min': df.close_MA20.describe()['min'],
+                'max': df.close_MA20.describe()['max']}
 
     def linear_fit(self, length=300):
         if self.last_close_price == 'NaN':
@@ -182,6 +196,7 @@ class Company:
         lr.fit(self.x_std, self.y_std)
         print('LR:', lr.coef_)
         self.lin_regplot(self.x_std, self.y_std, lr)
+        plt.show()
 
     def quatratic_fit(self, length=60):
         if self.last_close_price == 'NaN':
@@ -202,6 +217,7 @@ class Company:
         #  self.lin_regplot(self.x_std, self.y_std, self.pr)
         plt.scatter(self.x_std, self.y_std)
         plt.plot(self.x_std, self.y_quad_fit)
+        plt.show()
 
     def cubic_fit(self, length=50, draw_length=50):
         if not self.ran_get_history_k_mark:
@@ -232,4 +248,5 @@ class Company:
         y_std_plot = y_std[len(y_std) - draw_length:len(y_std) - 1]
         plt.scatter(x_std_plot, y_std_plot)
         plt.plot(x_future_std, y_cubic_fit)
+        plt.show()
 
