@@ -165,6 +165,7 @@ def find_low_high(result, result_pe_pb, window):
 error_list = []
 gain_lose_rate = []
 stock_to_check = A500.append((SH50, CYB50, HS300))
+stock_to_check.drop_duplicates(keep='first',inplace=True)
 #sh_sz_cyb = sh_A.append((sz_A, cyb))
 for i in stock_to_check:
     try:
