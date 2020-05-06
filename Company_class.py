@@ -1,5 +1,6 @@
 import os
 import time, datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 import baostock as bs
@@ -12,9 +13,8 @@ lg = bs.login()
 
 class Company:
 
-    delta = timedelta(days=365)  # 365天前开始
-    start_time = (datetime.now() - delta).strftime("%Y-%m-%d")
-    test
+    delta = timedelta(days=565)  # 365天前开始
+    start_date = (datetime.now() - delta).strftime("%Y-%m-%d")
 
     @classmethod
     def zz500(cls):
@@ -58,10 +58,6 @@ class Company:
     def __init__(self, stock_id):
         self.stock_id = stock_id
         self.end_date = (time.strftime("%Y-%m-%d", time.localtime()))
-        self.ran_get_history_k_mark = False
-
-    @property
-    def history_k(self):
         rs = bs.query_history_k_data_plus(self.stock_id,
                                           "date,code,open,high,low,close,preclose,volume,"
                                           "amount,adjustflag,turn,tradestatus,pctChg,isST",
@@ -69,7 +65,6 @@ class Company:
                                           frequency="d", adjustflag="2")
         data_list = []
         while (rs.error_code == '0') & rs.next():
-            # 获取一条记录，将记录合并在一起
             data_list.append(rs.get_row_data())
         result = pd.DataFrame(data_list, columns=rs.fields)
         cols = ['open', 'close', 'low', 'high', 'preclose', 'volume', 'amount', 'turn', 'pctChg']  # 多列转化成数字
@@ -77,28 +72,18 @@ class Company:
         result['MA200'] = result.high.rolling(200).mean()  # 计算好200日移动平均
         result['MA20'] = result.high.rolling(20).mean()  # 计算好200日移动平均
         result.dropna(inplace=True)
-        if data_list:
-            self.ran_get_history_k_mark = True #如果获取到了数据，改写标记
-        # self.last_close_price = result['close'][len(result) - 1]  # 初始化最后一个交易日收盘价
-        # self.aboveMA200_mark = self.last_close_price > result['MA200'][len(result) - 1]  # 初始化最后交易日收盘价是否在MA300之上
-        return result
+        self.history_k = result
 
     @property
     def aboveMA200_mark(self):
-        if not self.ran_get_history_k_mark:
-            self.history_k
         return self.last_close_price > self.history_k['MA200'].tail(1).iloc[0]
 
     @property
     def last_close_price(self):
-        if not self.ran_get_history_k_mark:
-            self.history_k
         return self.history_k['close'].tail(1).iloc[0]
 
     @property
     def coefficient_MA200(self):
-        if not self.ran_get_history_k_mark:
-            self.history_k
         y = pd.DataFrame(self.history_k.MA200[(len(self.history_k) - 30):(len(self.history_k))])
         x = pd.DataFrame(np.arange(len(y)))
         sc_x = StandardScaler()
@@ -111,8 +96,8 @@ class Company:
 
     @property
     def pe_pb(self):
-        now = datetime.datetime.now()
-        delta = datetime.timedelta(days=-90)
+        now = datetime.now()
+        delta = timedelta(days=-90)
         pe_start_time = (now + delta).strftime('%Y-%m-%d')
         # pe_start_time = (time.strftime("%Y-%m-%d", temp_time))
         # 避免获取太久前的数据，仅获取过去90天的数据。需要注意时间的格式。
@@ -133,8 +118,6 @@ class Company:
 
     @property
     def gain_lose_ratio(self):
-        if not self.ran_get_history_k_mark:
-            self.history_k
 
        #----------
         window = 30

@@ -3,7 +3,10 @@ import time
 import baostock as bs
 import pandas as pd
 import numpy as np
+from Company_class import Company
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+
 
 # from matplotlib import pyplot as plt
 #os.chdir('/Users/D_Dj/Python_projects/stock/Stock Reload')
@@ -12,9 +15,14 @@ os.chdir('/Users/D_Dj/PycharmProjects/Stock_analysis/Stock_analysis/stock_id')
 '''sh_A = pd.read_excel('sh_A.xlsx', index_col=0)
 sz_A = pd.read_excel('sz_A.xlsx', index_col=0)
 cyb = pd.read_excel('cyb.xlsx', index_col=0)'''
-A500 = pd.read_excel('A500.xlsx', index_col=0)
+'''A500 = pd.read_excel('A500.xlsx', index_col=0)
 SH50 = pd.read_excel('SH50.xlsx',index_col=0)
-CYB50 = pd.read_excel('CYB50.xlsx',index_col=0)
+CYB50 = pd.read_excel('CYB50.xlsx',index_col=0)'''
+A500 = Company.zz500()
+SH50 = Company.sz50()
+CYB50 = Company.cyb50()
+HS300 = Company.hs300()
+
 # 获取最近股票的阶段最高价和最低价å
 start_time = time.time()
 window = 30
@@ -99,11 +107,21 @@ def find_low_high(result, result_pe_pb, window):
     result = result.dropna()
     result = result.reset_index(drop=True)
     # 线性回归，计算MA200斜率
-    model = LinearRegression(fit_intercept=True)
+    #model = LinearRegression(fit_intercept=True)
     x = pd.DataFrame(np.arange(30))
     y = pd.DataFrame(result.MA200[(len(result) - 30):(len(result))])
-    model.fit(x, y)
-    coefficient = model.coef_
+    sc_x = StandardScaler()
+    sc_y = StandardScaler()
+    x_std = sc_x.fit_transform(x)
+    y_std = sc_y.fit_transform(y)
+    lr = LinearRegression()
+    lr.fit(x_std, y_std)
+    coefficient = lr.coef_
+
+
+    #model.fit(x, y)
+    #coefficient = model.coef_
+
 
     # 获取最近股票的阶段最高价和最低价
     # pre_low = result.low[len(result)-1]
@@ -146,9 +164,9 @@ def find_low_high(result, result_pe_pb, window):
 
 error_list = []
 gain_lose_rate = []
-stock_to_check = A500.append((SH50, CYB50))
+stock_to_check = A500.append((SH50, CYB50, HS300))
 #sh_sz_cyb = sh_A.append((sz_A, cyb))
-for i in stock_to_check.stock_id:
+for i in stock_to_check:
     try:
         result = get_history_k(i, s_date, e_date)
         result_pe_pb = get_pe_pb(i, s_date, e_date)
