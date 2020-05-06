@@ -11,7 +11,10 @@ lg = bs.login()
 
 
 class Company:
-    start_date = '2018-01-01'
+
+    delta = timedelta(days=365)  # 365天前开始
+    start_time = (datetime.now() - delta).strftime("%Y-%m-%d")
+    test
 
     @classmethod
     def zz500(cls):
