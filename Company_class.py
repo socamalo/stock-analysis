@@ -13,8 +13,35 @@ lg = bs.login()
 
 class Company:
 
-    delta = timedelta(days=565)  # 365天前开始
-    start_date = (datetime.now() - delta).strftime("%Y-%m-%d")
+    delta_history_k = timedelta(days=665)  # 365天前开始
+    start_date = (datetime.now() - delta_history_k).strftime("%Y-%m-%d")
+    delta_pe = timedelta(days=10)
+    start_date_pe = (datetime.now() - delta_pe).strftime("%Y-%m-%d")
+
+    @classmethod
+    def pop_3(x):
+        x_list = list(x)
+        for i in range(3):
+            x_list.pop()
+        x_list.append(',')
+        x_str = ''.join(x_list)
+        return x_str
+
+    @classmethod
+    def b_to_a(x):
+        x_list = list(x)
+        poped = []
+        poped.append(x_list.pop(0))
+        poped.append(x_list.pop(0))
+        poped.insert(0, x_list.pop(0))
+        x_str = ''.join(x_list)
+        if poped == ['.', 's', 'h']:  # apple Numbers 的stock函数中沪市的股票代码为600xxxx.ss
+            poped = ['.', 's', 's']
+        else:
+            pass
+        poped_str = ''.join(poped)
+        result = x_str + poped_str
+        return result
 
     @classmethod
     def zz500(cls):
@@ -69,18 +96,28 @@ class Company:
         result = pd.DataFrame(data_list, columns=rs.fields)
         cols = ['open', 'close', 'low', 'high', 'preclose', 'volume', 'amount', 'turn', 'pctChg']  # 多列转化成数字
         result[cols] = result[cols].apply(pd.to_numeric, errors='coerce', axis=1)
+        result['MA300'] = result.high.rolling(300).mean()  # 计算好200日移动平均
         result['MA200'] = result.high.rolling(200).mean()  # 计算好200日移动平均
+        result['MA50'] = result.high.rolling(50).mean()  # 计算好200日移动平均
         result['MA20'] = result.high.rolling(20).mean()  # 计算好200日移动平均
         result.dropna(inplace=True)
         self.history_k = result
+        try:
+            self.last_close_price = self.history_k['close'].tail(1).iloc[0]
+        except:
+            pass
 
     @property
     def aboveMA200_mark(self):
         return self.last_close_price > self.history_k['MA200'].tail(1).iloc[0]
 
     @property
-    def last_close_price(self):
-        return self.history_k['close'].tail(1).iloc[0]
+    def MA50_above_MA300(self):
+        return self.history_k['MA50'].tail(1).iloc[0] >= self.history_k['MA200'].tail(1).iloc[0]
+
+#    @property
+ #   def last_close_price(self):
+  #      return self.history_k['close'].tail(1).iloc[0]
 
     @property
     def coefficient_MA200(self):
@@ -96,15 +133,9 @@ class Company:
 
     @property
     def pe_pb(self):
-        now = datetime.now()
-        delta = timedelta(days=-90)
-        pe_start_time = (now + delta).strftime('%Y-%m-%d')
-        # pe_start_time = (time.strftime("%Y-%m-%d", temp_time))
-        # 避免获取太久前的数据，仅获取过去90天的数据。需要注意时间的格式。
-        stock_id = self.stock_id
-        rs = bs.query_history_k_data_plus(stock_id,
+        rs = bs.query_history_k_data_plus(self.stock_id,
                                           "date,code,close,peTTM,pbMRQ,psTTM,pcfNcfTTM",
-                                          start_date=pe_start_time, end_date=self.end_date,
+                                          start_date=self.start_date_pe, end_date=self.end_date,
                                           frequency="d", adjustflag="3")
         result_list = []
         while (rs.error_code == '0') & rs.next():
