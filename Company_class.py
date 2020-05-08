@@ -18,6 +18,13 @@ class Company:
     delta_pe = timedelta(days=10)
     start_date_pe = (datetime.now() - delta_pe).strftime("%Y-%m-%d")
 
+    @staticmethod
+    def wwma(values, n):
+        """
+         J. Welles Wilder's EMA
+        """
+        return values.ewm(alpha=1 / n, adjust=False).mean()
+
     @classmethod
     def pop_3(x):
         x_list = list(x)
@@ -267,3 +274,32 @@ class Company:
         plt.plot(x_future_std, y_cubic_fit)
         plt.show()
 
+    def atr(self, n=14):
+        data = self.history_k.copy()
+        high = data['high']
+        low = data['low']
+        close = data['close']
+        data['tr0'] = abs(high - low)
+        data['tr1'] = abs(high - close.shift())
+        data['tr2'] = abs(low - close.shift())
+        tr = data[['tr0', 'tr1', 'tr2']].max(axis=1)
+        atr = Company.wwma(tr, n)
+        self.history_k['atr'] = atr
+        return self.history_k
+
+    def unit(self, amount=100000):
+        return  self.last_close_price * (amount/100) / self.atr().atr.tail(1).iloc[0]  #最近一天atr值
+
+'''
+    def ATR(df, n):
+        i = 0
+        TR_l = [0]
+        while i < df.index[-1]:
+            TR = max(df._get_value(i + 1, 'high'), df._get_value(i, 'close')) - min(df._get_value(i + 1, 'low'),
+                                                                                  df._get_value(i, 'close'))
+            TR_l.append(TR)
+            i = i + 1
+        TR_s = pd.Series(TR_l)
+        ATR = pd.Series(pd.ewma(TR_s, span=n, min_periods=n), name='ATR_' + str(n))
+        df = df.join(ATR)
+        return df'''
