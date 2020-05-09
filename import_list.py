@@ -9,3 +9,5 @@ from Company_class import Company
 
 def test():
     print('just for test')
+
+    https://medium.com/datadriveninvestor/turtle-trading-with-python-is-the-trend-really-your-friend-d178160be6e5
