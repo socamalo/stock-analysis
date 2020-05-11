@@ -11,3 +11,6 @@ def test():
     print('just for test')
 
     https://medium.com/datadriveninvestor/turtle-trading-with-python-is-the-trend-really-your-friend-d178160be6e5
+
+        
+df['date2'] = df.date.apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'))
