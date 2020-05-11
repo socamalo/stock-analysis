@@ -1,0 +1,9 @@
+time_series = pd.Series(pd.date_range('2020-5-10', freq='D', periods=100))
+df = pd.DataFrame(range(100), columns=['a'])
+df['date'] = time_series
+df2 = df.copy()
+df2.set_index('date', inplace=False)
+a = '2020-6-10'
+df2[:datetime.datetime.strptime(a, '%Y-%m-%d')]
+
+df['date2'] = df.date.apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'))
