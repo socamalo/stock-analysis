@@ -10,3 +10,30 @@ df['date2'] = df.date.apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'))
 
 
 pd.to_datetime(pd.Series(['Jul 31, 2009', '2010-01-10', None])) 一句搞定
+
+
+
+import sqlite3
+from pandas import DataFrame
+
+conn = sqlite3.connect('TestDB2.db')
+c = conn.cursor()
+
+c.execute('CREATE TABLE CARS (Brand text, Price number)')
+conn.commit()
+
+Cars = {'Brand': ['Honda Civic','Toyota Corolla','Ford Focus','Audi A4'],
+        'Price': [22000,25000,27000,35000]
+        }
+
+df = DataFrame(Cars, columns= ['Brand', 'Price'])
+df.to_sql('CARS', conn, if_exists='replace', index = False)
+ 
+c.execute('''  
+SELECT Brand, max(price) FROM CARS
+          ''')
+
+df = DataFrame(c.fetchall(), columns=['Brand','Price'])    
+print (df)
+
+#c.execute('DROP TABLE CARS')
